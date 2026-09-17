@@ -1,0 +1,41 @@
+{
+  "name": "ritmo_back",
+  "version": "0.1.0",
+  "description": "",
+  "main": "commitlint.config.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/client": "^7.10.0",
+    "express": "^5.2.1",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "zod": "^4.6.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.13",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.2",
+    "@types/supertest": "^7.2.1",
+    "dotenv": "^17.4.2",
+    "prisma": "^6.19.3",
+    "supertest": "^7.2.2",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.1"
+  }
+}
