@@ -174,3 +174,57 @@ registry.registerPath({
 - The global registry (`OpenAPIRegistry` instance) lives in `modules/shared/openapi-registry.ts`, and the final document is generated and served in `modules/shared/openapi.ts` (mounted at `/docs`).
 - `<domain>.openapi.ts` files must be imported once, centrally (e.g. in `modules/shared/openapi.ts` or the app bootstrap), so every module's routes get registered before the spec is generated.
 - Adding a new route to a `<domain>.routes.ts` file without a corresponding entry in `<domain>.openapi.ts` is considered incomplete work.
+
+## 14. Pagination
+
+Every endpoint that returns a list of entries (`GET` returning multiple records) must be paginated and follow this response envelope:
+
+```json
+{
+  "data": [],
+  "page": 1,
+  "pageSize": 12,
+  "totalItems": 30,
+  "totalPages": 10
+}
+```
+
+- `page` and `pageSize` are received as `query` params, validated with Zod in the `controller` (see §9), with sane defaults (e.g. `page = 1`, `pageSize = 12`) and an upper bound for `pageSize` (e.g. max `100`) to avoid abusive queries.
+- The pagination envelope schema is generic/reusable, not duplicated per module. Define it once in `modules/shared/pagination.ts` and compose it with each domain's item schema:
+
+
+## 15. Error Responses (RFC 9457 — Problem Details)
+
+Every error response returned by the API must follow [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) (Problem Details for HTTP APIs), with `Content-Type: application/problem+json`:
+
+```json
+{
+  "type": "https://ritmoapp.com/errors/not-found",
+  "title": "Resource not found",
+  "status": 404,
+  "detail": "User with id 123 was not found.",
+  "instance": "/users/123"
+}
+```
+
+- `type`, `title` and `status` are derived from the domain error class (see §8). Every `AppError` subclass must declare a `type` (a stable URI, doesn't need to resolve to a real page) and a default `title`, in addition to `statusCode`:
+
+- Fields not applicable in a given case (e.g. `errors` for validation issues) are extension members, added on top of the base RFC 9457 fields — never replacing them.
+- Zod validation errors (thrown when `body`/`query`/`params` fail parsing — see §9) are converted to Problem Details with an `errors` extension member listing each field/issue:
+
+```json
+{
+  "type": "https://ritmoapp.com/errors/validation",
+  "title": "Validation failed",
+  "status": 422,
+  "detail": "One or more fields are invalid.",
+  "instance": "/users",
+  "errors": [
+    { "field": "email", "message": "Invalid email address" }
+  ]
+}
+```
+
+- The conversion from `AppError`/`ZodError` to a Problem Details response happens once, in the global error middleware (`modules/shared/errorHandler.ts`) — individual `controller`s never build this payload by hand.
+- `instance` is always filled with `req.originalUrl` by the global error middleware, not by each error class.
+- Problem Details response schemas are registered in OpenAPI (see §13) as reusable components (`ProblemDetails`, `ValidationProblemDetails`) and referenced in each path's error responses (`404`, `422`, etc.), instead of being redefined per endpoint.
