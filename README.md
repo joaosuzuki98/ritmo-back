@@ -48,6 +48,21 @@ npm run dev
 
 If you're using the default values in the .env for the server, it will be available at `http://localhost:3000`.
 
+## 📚 API documentation
+
+With the API running, access the interactive Swagger UI at:
+
+`http://localhost:<SERVER_PORT>/docs`
+
+The raw OpenAPI specification is available at:
+
+`http://localhost:<SERVER_PORT>/docs.json`
+
+For example, with `SERVER_PORT=3000`:
+
+- Swagger UI: `http://localhost:3000/docs`
+- OpenAPI JSON: `http://localhost:3000/docs.json`
+
 ## 🧪 Tests
 
 To run the tests:
