@@ -36,12 +36,27 @@ cp .env.example .env
 docker compose up -d
 ```
 
-4. Run the Prisma migrations:
+4. Validate the Prisma schema:
 ```bash
-npx prisma migrate dev
+npx prisma validate --schema prisma/schema.prisma --config prisma7.config.mts
 ```
 
-5. Finally, run the API in the dev environment using:
+5. Apply the existing Prisma migrations, or create and apply a new migration when the schema has changed:
+```bash
+npx prisma migrate dev --schema prisma/schema.prisma --config prisma7.config.mts
+```
+
+To create a migration without applying it immediately, use a descriptive name:
+```bash
+npx prisma migrate dev --create-only --name <migration-name> --schema prisma/schema.prisma --config prisma7.config.mts
+```
+
+For production or another deployment environment, apply migrations without creating new ones:
+```bash
+npx prisma migrate deploy --schema prisma/schema.prisma --config prisma7.config.mts
+```
+
+6. Finally, run the API in the dev environment using:
 ```bash
 npm run dev
 ```
