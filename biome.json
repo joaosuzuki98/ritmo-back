@@ -6,7 +6,21 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false
+		"ignoreUnknown": false,
+		"includes": [
+			"**",
+			"!dist",
+			"!node_modules",
+			"!**/*.gen.ts",
+			"!prisma/generated",
+			"!coverage",
+			"!tsconfig.json",
+			"!package.*",
+			"!skills-lock.json",
+			"!commitlint.config.js",
+			"!.vscode/mcp.json",
+			"!prisma7.config.mts"
+		]
 	},
 	"formatter": {
 		"enabled": true,
