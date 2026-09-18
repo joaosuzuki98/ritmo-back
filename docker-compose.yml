@@ -11,6 +11,13 @@ services:
       - "${POSTGRES_HOST}:${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  inngest:
+    image: inngest/inngest
+    container_name: ritmo_inngest
+    command: "inngest dev -u http://host.docker.internal:3000/api/inngest"
+    ports:
+      - "8288:8288"
+    restart: always
 
 volumes:
   postgres_data:
