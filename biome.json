@@ -17,7 +17,7 @@
 			"!tsconfig.json",
 			"!package.*",
 			"!skills-lock.json",
-			"!commitlint.config.js",
+			"!commitlint.config.cjs",
 			"!.vscode/mcp.json",
 			"!prisma7.config.mts"
 		]
