@@ -1,13 +1,520 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum FrequencyType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum HabitPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum HabitStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum HabitDependencyType {
+  BLOCKING
+  REMINDER_ONLY
+}
+
+enum ConditionRuleType {
+  ALL
+  ANY
+}
+
+enum EventSource {
+  MANUAL
+  GENERATED_FROM_TASK
+}
+
+enum EventRecurrence {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum CompletionStatus {
+  COMPLETED
+  PARTIAL
+  NOT_COMPLETED
+}
+
+enum GoalDeadlineType {
+  SHORT
+  MEDIUM
+  LONG
+}
+
+enum GoalStatus {
+  IN_PROGRESS
+  COMPLETED
+  EXPIRED
+}
+
+enum ChallengeStatus {
+  ACTIVE
+  COMPLETED
+  FAILED
+}
+
+enum ReminderType {
+  ADAPTIVE
+  PREPARATION
+  LOCATION
+  SEQUENCE
+  RECOVERY
+}
+
+enum ExportFormat {
+  CSV
+  JSON
+  PDF
+}
+
+enum HistoryEntity {
+  HABIT
+  EVENT
+}
+
+// ===== users =====
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @map("nome")
+  email       String   @unique @map("email")
+  totalPoints Int      @default(0) @map("pontos_totais")
+  level       Int      @default(1) @map("nivel")
+  createdAt   DateTime @default(now()) @map("criado_em")
+
+  categories            Category[]
+  habits                Habit[]
+  events                Event[]
+  groupConsistencyGoals GroupConsistencyGoal[]
+  rewards               Reward[]
+  groupsCreated         Group[]                @relation("GroupCreatedBy")
+  groupMemberships      GroupMember[]
+  dailyNotes            DailyNote[]
+  scores                Score[]
+  exports               Export[]
+  backups               Backup[]
+  importedHealthData    ImportedHealthData[]
+  routineTemplates      RoutineTemplate[]
+  editHistory           EditHistory[]          @relation("UserEditHistory")
+
+  @@map("users")
+}
+
+// ===== categories =====
+model Category {
+  id     String @id @default(uuid()) @db.Uuid
+  name   String @map("nome")
+  userId String @map("usuario_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+
+  habits      Habit[]
+  suggestions CategorySuggestion[]
+
+  @@map("categories")
+}
+
+// ===== habits =====
+model Habit {
+  id                       String        @id @default(uuid()) @db.Uuid
+  userId                   String        @map("usuario_id") @db.Uuid
+  categoryId               String?       @map("categoria_id") @db.Uuid
+  name                     String        @map("nome")
+  description              String?       @map("descricao")
+  frequencyType            FrequencyType @map("frequencia_tipo")
+  weekDays                 Int[]         @default([]) @map("dias_semana")
+  estimatedDurationMinutes Int?          @map("duracao_estimada_min")
+  preferredTime            DateTime?     @map("horario_preferido")
+  priority                 HabitPriority @map("prioridade")
+  isFocusOfDay             Boolean       @default(false) @map("e_foco_do_dia")
+  status                   HabitStatus   @map("status")
+  seasonalStart            DateTime?     @map("sazonal_inicio")
+  seasonalEnd              DateTime?     @map("sazonal_fim")
+  createdAt                DateTime      @default(now()) @map("criado_em")
+
+  user     User      @relation(fields: [userId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  completionRecords       CompletionRecord[]
+  goals                   Goal[]
+  reminders               Reminder[]
+  streak                  Streak?
+  dependencies            HabitDependency[]    @relation("HabitDependencyHabit")
+  triggers                HabitDependency[]    @relation("HabitTrigger")
+  conditions              HabitCondition[]     @relation("HabitConditionHabit")
+  destinationConditions   HabitCondition[]     @relation("HabitConditionTarget")
+  temporaryChallenges     TemporaryChallenge[]
+  importedHealthData      ImportedHealthData[]
+  eventSubtasks           EventSubtask[]
+  categorySuggestions     CategorySuggestion[]
+  habitCorrelationsOrigin HabitCorrelation[]   @relation("HabitCorrelationOrigin")
+  habitCorrelationsTarget HabitCorrelation[]   @relation("HabitCorrelationTarget")
+  habitImpact             HabitImpact?
+  groupHabits             GroupHabit[]
+
+  @@index([userId, status])
+  @@index([userId, preferredTime])
+  @@map("habits")
+}
+
+model HabitDependency {
+  id             String              @id @default(uuid()) @db.Uuid
+  habitId        String              @map("habito_id") @db.Uuid
+  triggerHabitId String              @map("habito_gatilho_id") @db.Uuid
+  type           HabitDependencyType @map("tipo")
+
+  habit        Habit @relation("HabitDependencyHabit", fields: [habitId], references: [id])
+  triggerHabit Habit @relation("HabitTrigger", fields: [triggerHabitId], references: [id])
+
+  @@map("habit_dependencies")
+}
+
+model HabitCondition {
+  id               String             @id @default(uuid()) @db.Uuid
+  habitId          String             @map("habito_id") @db.Uuid
+  conditionHabitId String             @map("condicao_habito_id") @db.Uuid
+  conditionRule    Json               @map("condicao_regra")
+  conditionType    ConditionRuleType? @map("condicao_tipo")
+
+  habit          Habit @relation("HabitConditionHabit", fields: [habitId], references: [id])
+  conditionHabit Habit @relation("HabitConditionTarget", fields: [conditionHabitId], references: [id])
+
+  @@map("habit_conditions")
+}
+
+// ===== events =====
+model Event {
+  id                        String          @id @default(uuid()) @db.Uuid
+  userId                    String          @map("usuario_id") @db.Uuid
+  title                     String          @map("titulo")
+  dateTime                  DateTime        @map("data_hora")
+  location                  String?         @map("local")
+  recurrence                EventRecurrence @map("recorrencia")
+  notificationMinutesBefore Int?            @map("notificacao_min_antes")
+  countdownEnabled          Boolean         @default(false) @map("contador_regressivo")
+  conversionOrigin          EventSource     @map("origem_conversao")
+
+  user      User           @relation(fields: [userId], references: [id])
+  subtasks  EventSubtask[]
+  reminders Reminder[]
+
+  @@map("events")
+}
+
+model EventSubtask {
+  id      String    @id @default(uuid()) @db.Uuid
+  eventId String    @map("evento_id") @db.Uuid
+  habitId String    @map("habito_id") @db.Uuid
+  dueDate DateTime? @map("data_vencimento")
+
+  event Event @relation(fields: [eventId], references: [id])
+  habit Habit @relation(fields: [habitId], references: [id])
+
+  @@map("event_subtasks")
+}
+
+// ===== daily execution =====
+model IncompletionReason {
+  id          String             @id @default(uuid()) @db.Uuid
+  description String             @map("descricao")
+  records     CompletionRecord[]
+
+  @@map("incompletion_reasons")
+}
+
+model CompletionRecord {
+  id                     String           @id @default(uuid()) @db.Uuid
+  habitId                String           @map("habito_id") @db.Uuid
+  date                   DateTime         @map("data") @db.Date
+  status                 CompletionStatus @map("status")
+  completionTime         DateTime?        @map("horario_conclusao")
+  incompletionReasonId   String?          @map("motivo_nao_conclusao_id") @db.Uuid
+  note                   String?          @map("anotacao")
+  distractionLockEnabled Boolean          @default(false) @map("bloqueio_distracao_ativado")
+
+  habit              Habit               @relation(fields: [habitId], references: [id])
+  incompletionReason IncompletionReason? @relation(fields: [incompletionReasonId], references: [id])
+
+  @@unique([habitId, date])
+  @@index([date])
+  @@map("completion_records")
+}
+
+model Streak {
+  id            String   @id @default(uuid()) @db.Uuid
+  habitId       String   @unique @map("habito_id") @db.Uuid
+  currentStreak Int      @default(0) @map("sequencia_atual")
+  longestStreak Int      @default(0) @map("maior_sequencia")
+  updatedAt     DateTime @default(now()) @map("atualizado_em")
+
+  habit Habit @relation(fields: [habitId], references: [id])
+
+  @@map("streaks")
+}
+
+model DailyNote {
+  id     String   @id @default(uuid()) @db.Uuid
+  userId String   @map("usuario_id") @db.Uuid
+  date   DateTime @map("data") @db.Date
+  text   String   @map("texto")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("daily_notes")
+}
+
+// ===== goals, challenges and rewards =====
+model Goal {
+  id           String           @id @default(uuid()) @db.Uuid
+  habitId      String           @map("habito_id") @db.Uuid
+  deadlineType GoalDeadlineType @map("prazo")
+  description  String           @map("descricao")
+  targetValue  Int              @map("valor_alvo")
+  currentValue Int              @default(0) @map("valor_atual")
+  status       GoalStatus       @map("status")
+
+  habit   Habit    @relation(fields: [habitId], references: [id])
+  rewards Reward[]
+
+  @@map("goals")
+}
+
+model GroupConsistencyGoal {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("usuario_id") @db.Uuid
+  targetPercentage Int      @map("percentual_alvo")
+  includedHabitIds Json     @map("habitos_incluidos")
+  periodStart      DateTime @map("periodo_inicio") @db.Date
+  periodEnd        DateTime @map("periodo_fim") @db.Date
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("group_consistency_goals")
+}
+
+model TemporaryChallenge {
+  id           String          @id @default(uuid()) @db.Uuid
+  habitId      String          @map("habito_id") @db.Uuid
+  durationDays Int             @map("duracao_dias")
+  startDate    DateTime        @map("data_inicio") @db.Date
+  status       ChallengeStatus @map("status")
+
+  habit Habit @relation(fields: [habitId], references: [id])
+
+  @@map("temporary_challenges")
+}
+
+model Reward {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("usuario_id") @db.Uuid
+  goalId      String?   @map("meta_id") @db.Uuid
+  description String    @map("descricao")
+  redeemed    Boolean   @default(false) @map("resgatada")
+  redeemedAt  DateTime? @map("resgatada_em")
+
+  user User  @relation(fields: [userId], references: [id])
+  goal Goal? @relation(fields: [goalId], references: [id])
+
+  @@map("rewards")
+}
+
+// ===== gamification and social =====
+model Score {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("usuario_id") @db.Uuid
+  source    String   @map("origem")
+  points    Int      @map("pontos")
+  createdAt DateTime @default(now()) @map("criado_em")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("scores")
+}
+
+model Group {
+  id        String @id @default(uuid()) @db.Uuid
+  name      String @map("nome")
+  createdBy String @map("criado_por") @db.Uuid
+
+  creator User          @relation("GroupCreatedBy", fields: [createdBy], references: [id])
+  members GroupMember[]
+  habits  GroupHabit[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId  String   @map("grupo_id") @db.Uuid
+  userId   String   @map("usuario_id") @db.Uuid
+  joinedAt DateTime @default(now()) @map("entrou_em")
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@id([groupId, userId])
+  @@map("group_members")
+}
+
+model GroupHabit {
+  id      String @id @default(uuid()) @db.Uuid
+  groupId String @map("grupo_id") @db.Uuid
+  habitId String @map("habito_id") @db.Uuid
+  name    String @map("nome")
+
+  group Group @relation(fields: [groupId], references: [id])
+  habit Habit @relation(fields: [habitId], references: [id])
+
+  @@map("group_habits")
+}
+
+// ===== smart scheduling, reminders and location =====
+model Reminder {
+  id                   String       @id @default(uuid()) @db.Uuid
+  habitId              String?      @map("habito_id") @db.Uuid
+  eventId              String?      @map("evento_id") @db.Uuid
+  type                 ReminderType @map("tipo")
+  calculatedTime       DateTime?    @map("horario_calculado")
+  geofenceLat          Float?       @map("geofence_lat")
+  geofenceLng          Float?       @map("geofence_lng")
+  geofenceRadiusMeters Float?       @map("geofence_raio_m")
+  sentAt               DateTime?    @map("enviado_em")
+
+  habit Habit? @relation(fields: [habitId], references: [id])
+  event Event? @relation(fields: [eventId], references: [id])
+
+  @@map("reminders")
+}
+
+model SchedulingPreference {
+  id            String    @id @default(uuid()) @db.Uuid
+  habitId       String    @map("habito_id") @db.Uuid
+  suggestedTime DateTime? @map("horario_sugerido")
+  reason        String?   @map("motivo")
+
+  @@map("scheduling_preferences")
+}
+
+// ===== categorization, correlation and analysis =====
+model CategorySuggestion {
+  habitId             String @map("habito_id") @db.Uuid
+  suggestedCategoryId String @map("categoria_sugerida_id") @db.Uuid
+  confidence          Float  @map("confianca")
+
+  habit             Habit    @relation(fields: [habitId], references: [id])
+  suggestedCategory Category @relation(fields: [suggestedCategoryId], references: [id])
+
+  @@id([habitId])
+  @@map("category_suggestions")
+}
+
+model HabitCorrelation {
+  id           String   @id @default(uuid()) @db.Uuid
+  habitAId     String   @map("habito_a_id") @db.Uuid
+  habitBId     String   @map("habito_b_id") @db.Uuid
+  coefficient  Float    @map("coeficiente")
+  calculatedAt DateTime @default(now()) @map("calculado_em")
+
+  habitA Habit @relation("HabitCorrelationOrigin", fields: [habitAId], references: [id])
+  habitB Habit @relation("HabitCorrelationTarget", fields: [habitBId], references: [id])
+
+  @@map("habit_correlations")
+}
+
+model HabitImpact {
+  habitId      String   @id @map("habito_id") @db.Uuid
+  impactIndex  Float    @map("indice_impacto")
+  calculatedAt DateTime @default(now()) @map("calculado_em")
+
+  habit Habit @relation(fields: [habitId], references: [id])
+
+  @@map("habit_impacts")
+}
+
+model ProductivityScore {
+  userId String   @map("usuario_id") @db.Uuid
+  date   DateTime @map("data") @db.Date
+  score  Float    @map("score")
+
+  @@id([userId, date])
+  @@map("productivity_scores")
+}
+
+// ===== templates, history and integrations =====
+model RoutineTemplate {
+  id               String @id @default(uuid()) @db.Uuid
+  userId           String @map("usuario_id") @db.Uuid
+  name             String @map("nome")
+  includedHabitIds Json   @map("habitos_incluidos")
+  includedEvents   Json   @map("eventos_incluidos")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("routine_templates")
+}
+
+model EditHistory {
+  id            String        @id @default(uuid()) @db.Uuid
+  userId        String?       @map("usuario_id") @db.Uuid
+  entityType    HistoryEntity @map("entidade_tipo")
+  entityId      String        @map("entidade_id") @db.Uuid
+  changedField  String        @map("campo_alterado")
+  previousValue String?       @map("valor_anterior")
+  newValue      String?       @map("valor_novo")
+  changedAt     DateTime      @default(now()) @map("alterado_em")
+
+  user User? @relation("UserEditHistory", fields: [userId], references: [id])
+
+  @@map("edit_history")
+}
+
+model ImportedHealthData {
+  id       String   @id @default(uuid()) @db.Uuid
+  userId   String   @map("usuario_id") @db.Uuid
+  habitId  String?  @map("habito_id") @db.Uuid
+  date     DateTime @map("data") @db.Date
+  steps    Int      @map("passos")
+  calories Float    @map("calorias")
+
+  user  User   @relation(fields: [userId], references: [id])
+  habit Habit? @relation(fields: [habitId], references: [id])
+
+  @@map("imported_health_data")
+}
+
+model Backup {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("usuario_id") @db.Uuid
+  filePath  String   @map("arquivo_path")
+  createdAt DateTime @default(now()) @map("criado_em")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("backups")
+}
+
+model Export {
+  id           String       @id @default(uuid()) @db.Uuid
+  userId       String       @map("usuario_id") @db.Uuid
+  format       ExportFormat @map("formato")
+  includeNotes Boolean      @default(false) @map("incluir_anotacoes")
+  generatedAt  DateTime     @default(now()) @map("gerado_em")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("exports")
 }
