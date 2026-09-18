@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+echo
+echo "🔍 Running lint..."
+
+npx lint-staged || exit 1
+
+echo
+echo "✅ All checks passed!"

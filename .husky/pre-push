@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+echo
+echo "🧪 Running tests..."
+npm run test
+if [ $? -ne 0 ]; then
+	echo "❌ Tests failed. Commit aborted."
+	exit 1
+fi
+
+echo
+echo "✅ All tests passed!"
+
+echo
+echo "Thanks for your contribution!"
