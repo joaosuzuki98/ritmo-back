@@ -121,3 +121,56 @@ export const env = envSchema.parse(process.env)
 ## 12. Comments
 
 - Comment on the **why**, not the **what** — the code already describes what it does; the comment should justify a non-obvious decision (e.g., why use Inngest instead of an event bus in a specific case).
+
+## 13. API Documentation (OpenAPI)
+
+- API documentation is generated from Zod schemas using `@asteasolutions/zod-to-openapi`, exposed via `swagger-ui-express`. There is no separate/duplicated schema for docs — the same schema used for request validation (see §9) is reused to generate the OpenAPI spec.
+- Every Zod schema that represents a request or response shape must be registered with `.openapi(...)` (adding `example`, `description`, etc. where useful) and registered in the module's OpenAPI registry.
+- Each module has an `<domain>.openapi.ts` file, responsible for registering that module's paths and schemas in the shared registry.
+
+| Layer | Example |
+|---|---|
+| openapi registration | `users.openapi.ts` |
+
+```typescript
+// modules/users/users.schemas.ts
+import { z } from "zod"
+import { registry } from "modules/shared/openapi-registry"
+
+export const createUserSchema = registry.register(
+  "CreateUserInput",
+  z.object({
+    name: z.string().openapi({ example: "Jane Doe" }),
+    email: z.string().email().openapi({ example: "jane@example.com" }),
+  })
+)
+
+export type CreateUserInput = z.infer<typeof createUserSchema>
+```
+
+```typescript
+// modules/users/users.openapi.ts
+import { registry } from "modules/shared/openapi-registry"
+import { createUserSchema } from "./users.schemas"
+
+registry.registerPath({
+  method: "post",
+  path: "/users",
+  tags: ["Users"],
+  request: {
+    body: {
+      content: { "application/json": { schema: createUserSchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: "User created",
+      content: { "application/json": { schema: createUserSchema } },
+    },
+  },
+})
+```
+
+- The global registry (`OpenAPIRegistry` instance) lives in `modules/shared/openapi-registry.ts`, and the final document is generated and served in `modules/shared/openapi.ts` (mounted at `/docs`).
+- `<domain>.openapi.ts` files must be imported once, centrally (e.g. in `modules/shared/openapi.ts` or the app bootstrap), so every module's routes get registered before the spec is generated.
+- Adding a new route to a `<domain>.routes.ts` file without a corresponding entry in `<domain>.openapi.ts` is considered incomplete work.
