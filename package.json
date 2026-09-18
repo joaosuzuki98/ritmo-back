@@ -4,9 +4,9 @@
 	"description": "",
 	"main": "commitlint.config.js",
 	"scripts": {
-		"dev": "tsx watch src/index.ts",
+		"dev": "tsx watch src/server.ts",
 		"build": "tsc",
-		"start": "node dist/index.js",
+		"start": "node dist/server.js",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"test": "vitest run --passWithNoTests",
