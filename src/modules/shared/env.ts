@@ -1,6 +1,6 @@
-require("dotenv/config")
+import "dotenv/config"
 
-import z = require("zod")
+import { z } from "zod"
 
 const envSchema = z.object({
 	SERVER_PORT: z.coerce.number().int().positive().default(3000),
@@ -13,6 +13,4 @@ const envSchema = z.object({
 	POSTGRES_DB: z.string().default("my_database"),
 })
 
-const env = envSchema.parse(process.env)
-
-module.exports = { env }
+export const env = envSchema.parse(process.env)

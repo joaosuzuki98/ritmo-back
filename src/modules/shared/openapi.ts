@@ -1,12 +1,11 @@
-import express = require("express")
-import swaggerUi = require("swagger-ui-express")
+import { createRequire } from "node:module"
+import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi"
+import express from "express"
+import swaggerUi from "swagger-ui-express"
+import { registry } from "./openapi-registry.js"
+import "../health/health.openapi.js"
 
-const { OpenApiGeneratorV3 } =
-	require("@asteasolutions/zod-to-openapi") as typeof import("@asteasolutions/zod-to-openapi")
-
-const { registry } = require("./openapi-registry")
-require("../health/health.openapi")
-
+const require = createRequire(import.meta.url)
 const packageJson = require("../../../package.json") as { version: string }
 const generator = new OpenApiGeneratorV3(registry.definitions)
 const document = generator.generateDocument({
@@ -24,4 +23,4 @@ openapiRoutes.get("/docs.json", (_request, response) => {
 })
 openapiRoutes.use("/docs", swaggerUi.serve, swaggerUi.setup(document))
 
-module.exports = openapiRoutes
+export { openapiRoutes }

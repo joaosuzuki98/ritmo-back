@@ -1,3 +1,1 @@
-const healthRoutes = require("./health.routes")
-
-module.exports = healthRoutes
+export { healthRoutes } from "./health.routes.js"

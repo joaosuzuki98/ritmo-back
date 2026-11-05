@@ -1,14 +1,5 @@
-import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
-import type { ZodType } from "zod"
-
-import type { HealthResponse } from "./health.schemas"
-
-const { registry } = require("../shared/openapi-registry") as {
-	registry: OpenAPIRegistry
-}
-const { healthResponseSchema } = require("./health.schemas") as {
-	healthResponseSchema: ZodType<HealthResponse>
-}
+import { registry } from "../shared/openapi-registry.js"
+import { healthResponseSchema } from "./health.schemas.js"
 
 registry.registerPath({
 	method: "get",
