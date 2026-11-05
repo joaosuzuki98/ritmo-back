@@ -44,6 +44,9 @@ model User {
   todoTasks               TodoTask[]
   todoCategories          TodoCategory[]
   habitDisplayPreferences HabitDisplayPreference[]
+  authCredential          AuthCredential?
+  authSessions            AuthSession[]
+  passwordResetCodes      PasswordResetCode[]
 
   @@index([email])
   @@map("users")
@@ -542,4 +545,49 @@ model Export {
   user User @relation(fields: [userId], references: [id])
 
   @@map("exports")
+}
+
+// ===== backend-only authentication data =====
+model AuthCredential {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @map("user_id")
+  emailNormalized String   @unique @map("email_normalized")
+  passwordHash    String   @map("password_hash")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_credentials")
+}
+
+model AuthSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id")
+  refreshTokenHash String    @unique @map("refresh_token_hash")
+  lastUsedAt       DateTime  @default(now()) @map("last_used_at")
+  idleExpiresAt    DateTime  @map("idle_expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([idleExpiresAt])
+  @@map("auth_sessions")
+}
+
+model PasswordResetCode {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id")
+  codeHash   String    @map("code_hash")
+  attempts   Int       @default(0)
+  expiresAt  DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("password_reset_codes")
 }

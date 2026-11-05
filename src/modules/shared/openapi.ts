@@ -3,6 +3,7 @@ import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi"
 import express from "express"
 import swaggerUi from "swagger-ui-express"
 import { registry } from "./openapi-registry.js"
+import "../auth/auth.openapi.js"
 import "../health/health.openapi.js"
 
 const require = createRequire(import.meta.url)

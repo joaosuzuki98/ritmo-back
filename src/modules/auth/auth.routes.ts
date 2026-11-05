@@ -1,0 +1,42 @@
+import express from "express"
+import rateLimit from "express-rate-limit"
+
+import {
+	completePasswordReset,
+	login,
+	logout,
+	refresh,
+	register,
+	requestPasswordReset,
+} from "./auth.controller.js"
+
+const authRoutes = express.Router()
+const authLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	limit: 10,
+	standardHeaders: true,
+	legacyHeaders: false,
+})
+const passwordResetLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	limit: 5,
+	standardHeaders: true,
+	legacyHeaders: false,
+})
+
+authRoutes.post("/api/v1/auth/register", authLimiter, register)
+authRoutes.post("/api/v1/auth/login", authLimiter, login)
+authRoutes.post("/api/v1/auth/refresh", authLimiter, refresh)
+authRoutes.post("/api/v1/auth/logout", authLimiter, logout)
+authRoutes.post(
+	"/api/v1/auth/password-reset/request",
+	passwordResetLimiter,
+	requestPasswordReset,
+)
+authRoutes.post(
+	"/api/v1/auth/password-reset/complete",
+	passwordResetLimiter,
+	completePasswordReset,
+)
+
+export { authRoutes }
