@@ -1,6 +1,7 @@
 import { randomUUID, timingSafeEqual } from "node:crypto"
 import { Prisma } from "@prisma/client"
 import argon2 from "argon2"
+import { AppError } from "../shared/errors.js"
 import {
 	isPasswordResetEmailConfigured,
 	sendPasswordResetCode,
@@ -24,15 +25,15 @@ const PASSWORD_RESET_TTL_MINUTES = 10
 const PASSWORD_RESET_GENERIC_MESSAGE =
 	"Se o email estiver cadastrado, enviaremos um código de redefinição."
 
-export class AuthServiceError extends Error {
-	readonly statusCode: number
-	readonly code: string
-
+export class AuthServiceError extends AppError {
 	constructor(statusCode: number, code: string, message: string) {
-		super(message)
+		super({
+			statusCode,
+			type: `https://ritmoapp.com/errors/${code.toLowerCase().replaceAll("_", "-")}`,
+			detail: message,
+			code,
+		})
 		this.name = "AuthServiceError"
-		this.statusCode = statusCode
-		this.code = code
 	}
 }
 
