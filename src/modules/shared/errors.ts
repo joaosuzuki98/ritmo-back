@@ -1,4 +1,8 @@
 import { STATUS_CODES } from "node:http"
+import { env } from "./env.js"
+
+export const problemTypeUri = (slug: string) =>
+	`${env.PROBLEM_DETAILS_BASE_URL}/errors/${slug}`
 
 type AppErrorOptions = {
 	statusCode: number
@@ -27,7 +31,7 @@ export class NotFoundError extends AppError {
 	constructor(detail = "The requested resource was not found.") {
 		super({
 			statusCode: 404,
-			type: "https://ritmoapp.com/errors/not-found",
+			type: problemTypeUri("not-found"),
 			detail,
 		})
 		this.name = "NotFoundError"

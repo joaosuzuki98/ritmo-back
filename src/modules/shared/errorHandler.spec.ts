@@ -1,9 +1,26 @@
 import express from "express"
 import request from "supertest"
-import { describe, expect, it } from "vitest"
+import { beforeAll, describe, expect, it } from "vitest"
 import { z } from "zod"
-import { errorHandler, notFoundHandler } from "./errorHandler.js"
-import { AppError } from "./errors.js"
+
+let errorHandler: typeof import("./errorHandler.js").errorHandler
+let notFoundHandler: typeof import("./errorHandler.js").notFoundHandler
+let AppError: typeof import("./errors.js").AppError
+let problemTypeUri: typeof import("./errors.js").problemTypeUri
+
+beforeAll(async () => {
+	process.env.DATABASE_URL ??=
+		"postgresql://test:test@127.0.0.1:5432/test?schema=public"
+	process.env.PROBLEM_DETAILS_BASE_URL ??= "https://ritmoapp.com"
+	const [errorHandlerModule, errorsModule] = await Promise.all([
+		import("./errorHandler.js"),
+		import("./errors.js"),
+	])
+	errorHandler = errorHandlerModule.errorHandler
+	notFoundHandler = errorHandlerModule.notFoundHandler
+	AppError = errorsModule.AppError
+	problemTypeUri = errorsModule.problemTypeUri
+})
 
 const requestSchema = z.object({ email: z.string().email() })
 
@@ -17,7 +34,7 @@ const createTestApp = () => {
 		next(
 			new AppError({
 				statusCode: 409,
-				type: "https://ritmoapp.com/errors/email-in-use",
+				type: problemTypeUri("email-in-use"),
 				detail: "Email is already registered.",
 				code: "EMAIL_IN_USE",
 			}),
@@ -39,7 +56,7 @@ describe("errorHandler", () => {
 			"application/problem+json",
 		)
 		expect(response.body).toMatchObject({
-			type: "https://ritmoapp.com/errors/validation",
+			type: problemTypeUri("validation"),
 			title: "Validation failed",
 			status: 422,
 			detail: "One or more fields are invalid.",
@@ -59,7 +76,7 @@ describe("errorHandler", () => {
 			"application/problem+json",
 		)
 		expect(response.body).toMatchObject({
-			type: "https://ritmoapp.com/errors/email-in-use",
+			type: problemTypeUri("email-in-use"),
 			title: "Conflict",
 			status: 409,
 			detail: "Email is already registered.",
@@ -76,7 +93,7 @@ describe("errorHandler", () => {
 			"application/problem+json",
 		)
 		expect(response.body).toMatchObject({
-			type: "https://ritmoapp.com/errors/not-found",
+			type: problemTypeUri("not-found"),
 			title: "Not Found",
 			status: 404,
 			instance: "/missing",

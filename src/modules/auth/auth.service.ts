@@ -1,7 +1,7 @@
 import { randomUUID, timingSafeEqual } from "node:crypto"
 import { Prisma } from "@prisma/client"
 import argon2 from "argon2"
-import { AppError } from "../shared/errors.js"
+import { AppError, problemTypeUri } from "../shared/errors.js"
 import {
 	isPasswordResetEmailConfigured,
 	sendPasswordResetCode,
@@ -29,7 +29,7 @@ export class AuthServiceError extends AppError {
 	constructor(statusCode: number, code: string, message: string) {
 		super({
 			statusCode,
-			type: `https://ritmoapp.com/errors/${code.toLowerCase().replaceAll("_", "-")}`,
+			type: problemTypeUri(code.toLowerCase().replaceAll("_", "-")),
 			detail: message,
 			code,
 		})

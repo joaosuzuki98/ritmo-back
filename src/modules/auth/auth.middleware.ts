@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express"
 
+import { AppError, problemTypeUri } from "../shared/errors.js"
 import { authRepository } from "./auth.repository.js"
 import { createRefreshExpiry, verifyAccessToken } from "./auth.tokens.js"
 
@@ -9,44 +10,49 @@ export type AuthenticatedRequest = Request & {
 
 export const requireAuth = async (
 	request: Request,
-	response: Response,
+	_response: Response,
 	next: NextFunction,
 ) => {
 	const [scheme, token] = request.header("authorization")?.split(" ") ?? []
 	if (scheme !== "Bearer" || !token) {
-		response.status(401).json({
-			error: { code: "UNAUTHENTICATED", message: "Autenticação necessária." },
+		throw new AppError({
+			statusCode: 401,
+			type: problemTypeUri("unauthenticated"),
+			detail: "Autenticação necessária.",
+			code: "UNAUTHENTICATED",
 		})
-		return
 	}
 
 	let claims: Awaited<ReturnType<typeof verifyAccessToken>>
 	try {
 		claims = await verifyAccessToken(token)
 	} catch {
-		response.status(401).json({
-			error: {
-				code: "INVALID_ACCESS_TOKEN",
-				message: "Token inválido ou expirado.",
-			},
+		throw new AppError({
+			statusCode: 401,
+			type: problemTypeUri("invalid-access-token"),
+			detail: "Token inválido ou expirado.",
+			code: "INVALID_ACCESS_TOKEN",
 		})
-		return
 	}
 
 	const session = await authRepository.findSession(claims.sessionId)
 	const now = new Date()
 	if (!session || session.userId !== claims.userId || session.revokedAt) {
-		response.status(401).json({
-			error: { code: "SESSION_EXPIRED", message: "Sessão expirada." },
+		throw new AppError({
+			statusCode: 401,
+			type: problemTypeUri("session-expired"),
+			detail: "Sessão expirada.",
+			code: "SESSION_EXPIRED",
 		})
-		return
 	}
 	if (session.idleExpiresAt <= now) {
 		await authRepository.revokeSessionById(session.id, now)
-		response.status(401).json({
-			error: { code: "SESSION_EXPIRED", message: "Sessão expirada." },
+		throw new AppError({
+			statusCode: 401,
+			type: problemTypeUri("session-expired"),
+			detail: "Sessão expirada.",
+			code: "SESSION_EXPIRED",
 		})
-		return
 	}
 
 	const touched = await authRepository.touchSession(
@@ -55,10 +61,12 @@ export const requireAuth = async (
 		createRefreshExpiry(now),
 	)
 	if (touched.count !== 1) {
-		response.status(401).json({
-			error: { code: "SESSION_EXPIRED", message: "Sessão expirada." },
+		throw new AppError({
+			statusCode: 401,
+			type: problemTypeUri("session-expired"),
+			detail: "Sessão expirada.",
+			code: "SESSION_EXPIRED",
 		})
-		return
 	}
 
 	;(request as AuthenticatedRequest).auth = claims

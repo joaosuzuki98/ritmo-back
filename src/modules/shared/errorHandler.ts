@@ -1,7 +1,7 @@
 import type { ErrorRequestHandler, RequestHandler, Response } from "express"
 import { z } from "zod"
 
-import { AppError, NotFoundError } from "./errors.js"
+import { AppError, NotFoundError, problemTypeUri } from "./errors.js"
 
 type ProblemDetails = {
 	type: string
@@ -31,7 +31,7 @@ const errorHandler: ErrorRequestHandler = (error, request, response, _next) => {
 
 	if (error instanceof z.ZodError) {
 		sendProblem(response, {
-			type: "https://ritmoapp.com/errors/validation",
+			type: problemTypeUri("validation"),
 			title: "Validation failed",
 			status: 422,
 			detail: "One or more fields are invalid.",
@@ -59,7 +59,7 @@ const errorHandler: ErrorRequestHandler = (error, request, response, _next) => {
 
 	if (isErrorWithType(error) && error.type === "entity.parse.failed") {
 		sendProblem(response, {
-			type: "https://ritmoapp.com/errors/invalid-json",
+			type: problemTypeUri("invalid-json"),
 			title: "Invalid JSON",
 			status: 400,
 			detail: "The request body contains invalid JSON.",
@@ -71,7 +71,7 @@ const errorHandler: ErrorRequestHandler = (error, request, response, _next) => {
 
 	if (isErrorWithType(error) && error.type === "entity.too.large") {
 		sendProblem(response, {
-			type: "https://ritmoapp.com/errors/payload-too-large",
+			type: problemTypeUri("payload-too-large"),
 			title: "Payload Too Large",
 			status: 413,
 			detail: "The request body exceeds the allowed size.",
@@ -83,7 +83,7 @@ const errorHandler: ErrorRequestHandler = (error, request, response, _next) => {
 
 	console.error("Unhandled API error:", error)
 	sendProblem(response, {
-		type: "https://ritmoapp.com/errors/internal",
+		type: problemTypeUri("internal"),
 		title: "Internal Server Error",
 		status: 500,
 		detail: "Ocorreu um erro inesperado.",

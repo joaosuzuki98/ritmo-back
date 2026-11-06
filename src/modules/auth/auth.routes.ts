@@ -1,7 +1,7 @@
 import express from "express"
 import rateLimit from "express-rate-limit"
 
-import { AppError } from "../shared/errors.js"
+import { AppError, problemTypeUri } from "../shared/errors.js"
 import {
 	completePasswordReset,
 	login,
@@ -21,7 +21,7 @@ const authLimiter = rateLimit({
 		next(
 			new AppError({
 				statusCode: 429,
-				type: "https://ritmoapp.com/errors/rate-limit-exceeded",
+				type: problemTypeUri("rate-limit-exceeded"),
 				detail: "Too many requests. Please try again later.",
 				code: "RATE_LIMIT_EXCEEDED",
 			}),
@@ -37,7 +37,7 @@ const passwordResetLimiter = rateLimit({
 		next(
 			new AppError({
 				statusCode: 429,
-				type: "https://ritmoapp.com/errors/rate-limit-exceeded",
+				type: problemTypeUri("rate-limit-exceeded"),
 				detail: "Too many requests. Please try again later.",
 				code: "RATE_LIMIT_EXCEEDED",
 			}),
