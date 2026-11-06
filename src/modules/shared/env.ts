@@ -6,6 +6,9 @@ import { z } from "zod"
 const envSchema = z.object({
 	SERVER_PORT: z.coerce.number().int().positive().default(3000),
 	SERVER_HOST: z.string().default("127.0.0.1"),
+	LOG_LEVEL: z
+		.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+		.default("info"),
 	PROBLEM_DETAILS_BASE_URL: z
 		.string()
 		.url()

@@ -2,6 +2,7 @@ import type { ErrorRequestHandler, RequestHandler, Response } from "express"
 import { z } from "zod"
 
 import { AppError, NotFoundError, problemTypeUri } from "./errors.js"
+import { logger } from "./logger.js"
 
 type ProblemDetails = {
 	type: string
@@ -81,7 +82,10 @@ const errorHandler: ErrorRequestHandler = (error, request, response, _next) => {
 		return
 	}
 
-	console.error("Unhandled API error:", error)
+	logger.error(
+		{ err: error, method: request.method, path: request.path },
+		"Unhandled API error",
+	)
 	sendProblem(response, {
 		type: problemTypeUri("internal"),
 		title: "Internal Server Error",
