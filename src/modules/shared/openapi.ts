@@ -5,9 +5,15 @@ import swaggerUi from "swagger-ui-express"
 import { registry } from "./openapi-registry.js"
 import "../auth/auth.openapi.js"
 import "../health/health.openapi.js"
+import "../sync/sync.openapi.js"
 
 const require = createRequire(import.meta.url)
 const packageJson = require("../../../package.json") as { version: string }
+registry.registerComponent("securitySchemes", "bearerAuth", {
+	type: "http",
+	scheme: "bearer",
+	bearerFormat: "JWT",
+})
 const generator = new OpenApiGeneratorV3(registry.definitions)
 const document = generator.generateDocument({
 	openapi: "3.0.0",

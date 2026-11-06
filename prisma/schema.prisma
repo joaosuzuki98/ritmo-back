@@ -47,6 +47,8 @@ model User {
   authCredential          AuthCredential?
   authSessions            AuthSession[]
   passwordResetCodes      PasswordResetCode[]
+  syncState               SyncState?
+  syncChanges             SyncChange[]
 
   @@index([email])
   @@map("users")
@@ -590,4 +592,28 @@ model PasswordResetCode {
 
   @@index([userId, expiresAt])
   @@map("password_reset_codes")
+}
+
+model SyncState {
+  userId    String @id @map("user_id")
+  timestamp BigInt @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sync_states")
+}
+
+model SyncChange {
+  id        String @id @default(uuid()) @db.Uuid
+  userId    String @map("user_id")
+  tableName String @map("table_name")
+  recordId  String @map("record_id")
+  operation String
+  changedAt BigInt @map("changed_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, changedAt])
+  @@index([userId, tableName, recordId, changedAt])
+  @@map("sync_changes")
 }
