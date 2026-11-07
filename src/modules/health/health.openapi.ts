@@ -1,14 +1,6 @@
-import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
-import type { ZodType } from "zod"
-
-import type { HealthResponse } from "./health.schemas"
-
-const { registry } = require("../shared/openapi-registry") as {
-	registry: OpenAPIRegistry
-}
-const { healthResponseSchema } = require("./health.schemas") as {
-	healthResponseSchema: ZodType<HealthResponse>
-}
+import { registry } from "../shared/openapi-registry.js"
+import { problemDetailsSchema } from "../shared/problem-details.schemas.js"
+import { healthResponseSchema } from "./health.schemas.js"
 
 registry.registerPath({
 	method: "get",
@@ -20,6 +12,14 @@ registry.registerPath({
 			content: {
 				"application/json": {
 					schema: healthResponseSchema,
+				},
+			},
+		},
+		500: {
+			description: "Unexpected server error",
+			content: {
+				"application/problem+json": {
+					schema: problemDetailsSchema,
 				},
 			},
 		},

@@ -1,11 +1,9 @@
+import { createRequire } from "node:module"
 import type { Request, Response } from "express"
 
-const { healthResponseSchema } = require("./health.schemas") as {
-	healthResponseSchema: {
-		parse: (input: unknown) => unknown
-	}
-}
+import { healthResponseSchema } from "./health.schemas.js"
 
+const require = createRequire(import.meta.url)
 const packageJson = require("../../../package.json") as { version: string }
 
 const getHealth = (_request: Request, response: Response) => {
@@ -18,4 +16,4 @@ const getHealth = (_request: Request, response: Response) => {
 	response.json(healthResponse)
 }
 
-module.exports = { getHealth }
+export { getHealth }
