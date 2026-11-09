@@ -9,7 +9,7 @@
 		"start": "node dist/server.js",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
-		"test": "vitest run --passWithNoTests",
+		"test": "vitest run --dir src --passWithNoTests",
 		"test:watch": "vitest",
 		"prepare": "husky"
 	},
@@ -27,6 +27,7 @@
 		"inngest": "^4.20.0",
 		"jose": "^6.2.15",
 		"nodemailer": "^10.3.1",
+		"openai": "^7.53.0",
 		"pg": "^8.23.1",
 		"pino": "^10.3.1",
 		"pino-http": "^11.0.0",
