@@ -4,6 +4,7 @@ import express from "express"
 import swaggerUi from "swagger-ui-express"
 import { registry } from "./openapi-registry.js"
 import "../auth/auth.openapi.js"
+import "../ai/ai.openapi.js"
 import "../health/health.openapi.js"
 import "../sync/sync.openapi.js"
 

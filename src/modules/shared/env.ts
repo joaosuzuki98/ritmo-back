@@ -20,6 +20,8 @@ const envSchema = z.object({
 	POSTGRES_PASSWORD: z.string().default("my_password"),
 	POSTGRES_DB: z.string().default("my_database"),
 	AUTH_ACCESS_TOKEN_SECRET: z.string().min(32).optional(),
+	OPENAI_API_KEY: z.string().min(1).optional(),
+	OPENAI_MODEL: z.string().min(1).default("gpt-4o-mini"),
 	SMTP_URL: z.string().url().optional(),
 	MAIL_FROM: z.string().email().optional(),
 })

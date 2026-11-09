@@ -1,4 +1,5 @@
 import express from "express"
+import { aiRoutes } from "./modules/ai/index.js"
 import { authRoutes } from "./modules/auth/index.js"
 import { healthRoutes } from "./modules/health/index.js"
 import { errorHandler, notFoundHandler } from "./modules/shared/errorHandler.js"
@@ -12,6 +13,7 @@ app.use(httpLogger)
 app.use(express.json({ limit: "5mb" }))
 app.use(openapiRoutes)
 app.use(authRoutes)
+app.use(aiRoutes)
 app.use(healthRoutes)
 app.use(syncRoutes)
 app.use(notFoundHandler)
