@@ -1,11 +1,10 @@
-const { env } = require("./modules/shared/env") as {
-	env: {
-		SERVER_PORT: number
-	}
-}
-
-const { app } = require("./app") as { app: import("express").Express }
+import { app } from "./app.js"
+import { env } from "./modules/shared/env.js"
+import { logger } from "./modules/shared/logger.js"
 
 app.listen(env.SERVER_PORT, () => {
-	console.log(`API listening on port ${env.SERVER_PORT}`)
+	logger.info(
+		{ event: "server.started", host: env.SERVER_HOST, port: env.SERVER_PORT },
+		"API server listening",
+	)
 })
