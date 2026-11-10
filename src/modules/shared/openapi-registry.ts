@@ -1,10 +1,9 @@
-import z = require("zod")
-
-const { extendZodWithOpenApi, OpenAPIRegistry } =
-	require("@asteasolutions/zod-to-openapi") as typeof import("@asteasolutions/zod-to-openapi")
+import {
+	extendZodWithOpenApi,
+	OpenAPIRegistry,
+} from "@asteasolutions/zod-to-openapi"
+import { z } from "zod"
 
 extendZodWithOpenApi(z)
 
-const registry = new OpenAPIRegistry()
-
-module.exports = { registry }
+export const registry = new OpenAPIRegistry()

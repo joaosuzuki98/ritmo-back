@@ -1,10 +1,6 @@
-import z = require("zod")
+import { z } from "zod"
 
-import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi"
-
-const { registry } = require("../shared/openapi-registry") as {
-	registry: OpenAPIRegistry
-}
+import { registry } from "../shared/openapi-registry.js"
 
 const healthResponseSchema = registry.register(
 	"HealthResponse",
@@ -19,4 +15,4 @@ const healthResponseSchema = registry.register(
 
 export type HealthResponse = z.infer<typeof healthResponseSchema>
 
-module.exports = { healthResponseSchema }
+export { healthResponseSchema }
