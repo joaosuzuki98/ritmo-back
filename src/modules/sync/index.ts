@@ -1,1 +1,8 @@
+export { getHabitSummary as getAiHabitSummary } from "./sync.ai.analytics.js"
+export { applyCompletion as applyAiCompletion } from "./sync.ai.completion.js"
+export { getGoalInsights as getAiGoalInsights } from "./sync.ai.goals.js"
+export { applyHabit as applyAiHabit } from "./sync.ai.habit.js"
+export { syncAiMutations } from "./sync.ai.mutations.js"
+export { syncAiService } from "./sync.ai.service.js"
+export { getHabitStreaks as getAiHabitStreaks } from "./sync.ai.streaks.js"
 export { syncRoutes } from "./sync.routes.js"
