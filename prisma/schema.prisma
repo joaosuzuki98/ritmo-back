@@ -49,6 +49,7 @@ model User {
   passwordResetCodes      PasswordResetCode[]
   syncState               SyncState?
   syncChanges             SyncChange[]
+  aiProposals             AiProposal[]
 
   @@index([email])
   @@map("users")
@@ -550,6 +551,23 @@ model Export {
 }
 
 // ===== backend-only authentication data =====
+model AiProposal {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id")
+  payload   Json
+  status    String   @default("pending")
+  timeZone  String?  @map("time_zone")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([expiresAt])
+  @@map("ai_proposals")
+}
+
 model AuthCredential {
   id              String   @id @default(uuid()) @db.Uuid
   userId          String   @unique @map("user_id")

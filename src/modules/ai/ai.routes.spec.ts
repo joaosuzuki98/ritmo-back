@@ -18,7 +18,7 @@ beforeAll(async () => {
 })
 
 describe("AI routes", () => {
-	it("requires authentication before accessing the chat endpoint", async () => {
+	it("does not expose the legacy chat endpoint", async () => {
 		const app = express()
 		app.use(express.json())
 		app.use(aiRoutes)
@@ -28,6 +28,33 @@ describe("AI routes", () => {
 			.post("/api/v1/ai/chat")
 			.send({ message: "Olá" })
 
+		expect(response.status).toBe(404)
+	})
+
+	it("requires authentication before opening the agent stream", async () => {
+		const app = express()
+		app.use(express.json())
+		app.use(aiRoutes)
+		app.use(errorHandler)
+
+		const response = await request(app)
+			.post("/api/v1/ai/chat/stream")
+			.send({ message: "Olá" })
+
+		expect(response.status).toBe(401)
+		expect(response.body.code).toBe("UNAUTHENTICATED")
+	})
+
+	it("requires authentication before deciding a proposal", async () => {
+		const app = express()
+		app.use(express.json())
+		app.use(aiRoutes)
+		app.use(errorHandler)
+		const response = await request(app)
+			.post(
+				"/api/v1/ai/proposals/33114aa6-ab20-41d1-9f08-45f439ef7c53/decision",
+			)
+			.send({ decision: "accepted" })
 		expect(response.status).toBe(401)
 		expect(response.body.code).toBe("UNAUTHENTICATED")
 	})
@@ -39,9 +66,14 @@ describe("AI routes", () => {
 		const response = await request(app).get("/docs.json")
 
 		expect(response.status).toBe(200)
-		expect(response.body.paths["/api/v1/ai/chat"].post).toMatchObject({
-			security: [{ bearerAuth: [] }],
-			tags: ["AI"],
-		})
+		expect(response.body.paths["/api/v1/ai/chat"]).toBeUndefined()
+		expect(response.body.components.schemas.AiChatRequest).toBeUndefined()
+		expect(
+			response.body.paths["/api/v1/ai/chat/stream"].post.responses["200"]
+				.content["text/event-stream"],
+		).toBeDefined()
+		expect(
+			response.body.paths["/api/v1/ai/proposals/{proposalId}/decision"].post,
+		).toMatchObject({ security: [{ bearerAuth: [] }] })
 	})
 })
