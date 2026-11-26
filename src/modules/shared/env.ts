@@ -22,6 +22,9 @@ const envSchema = z.object({
 	AUTH_ACCESS_TOKEN_SECRET: z.string().min(32).optional(),
 	OPENAI_API_KEY: z.string().min(1).optional(),
 	OPENAI_MODEL: z.string().min(1).default("gpt-4o-mini"),
+	OPENAI_REASONING_EFFORT: z
+		.enum(["none", "minimal", "low", "medium", "high", "xhigh", "max"])
+		.optional(),
 	SMTP_URL: z.string().url().optional(),
 	MAIL_FROM: z.string().email().optional(),
 })

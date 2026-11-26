@@ -3,7 +3,7 @@ import rateLimit from "express-rate-limit"
 import type { AuthenticatedRequest } from "../auth/auth.middleware.js"
 import { requireAuth } from "../auth/auth.middleware.js"
 import { AppError, problemTypeUri } from "../shared/errors.js"
-import { chat } from "./ai.controller.js"
+import { decideProposal, streamChat } from "./ai.controller.js"
 
 const aiRoutes = express.Router()
 const aiLimiter = rateLimit({
@@ -24,6 +24,11 @@ const aiLimiter = rateLimit({
 	},
 })
 
-aiRoutes.post("/api/v1/ai/chat", requireAuth, aiLimiter, chat)
+aiRoutes.post("/api/v1/ai/chat/stream", requireAuth, aiLimiter, streamChat)
+aiRoutes.post(
+	"/api/v1/ai/proposals/:proposalId/decision",
+	requireAuth,
+	decideProposal,
+)
 
 export { aiRoutes }
